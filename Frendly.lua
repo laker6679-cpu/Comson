@@ -17,7 +17,12 @@ pcall(function()
     game:GetService("CoreGui").ExperienceChat:WaitForChild("appLayout"):WaitForChild("chatInputBar").Visible = true
 end)
 
-
+--// HWID Lock
+local AllowedUsers = {
+    10795177721,
+    7508375923,
+    11000050138,
+}
 
 if not table.find(AllowedUsers, LocalPlayer.UserId) then
     LocalPlayer:Kick("❌ HWID Lock: Access Denied")
