@@ -22,7 +22,6 @@ local AllowedUsers = {
     10795177721,
     7508375923,
     11000050138,
-    4732270009,
 }
 
 if not table.find(AllowedUsers, LocalPlayer.UserId) then
