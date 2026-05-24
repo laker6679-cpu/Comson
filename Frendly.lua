@@ -70,7 +70,7 @@ MenuGroup:AddToggle("ShowCustomCursor", {
 
 MenuGroup:AddDropdown("NotificationSide", {
     Values = { "Left", "Right" },
-    Default = "c",
+    Default = "Right",
     Text = "Notification Side",
     Callback = function(Value)
         Library:SetNotifySide(Value)
