@@ -12,7 +12,7 @@ local LocalPlayer = Players.LocalPlayer
 
 --// HWID Lock
 local AllowedUsers = {
-    10795177721, -- Твой UserId
+    10795177721,
     7508375923,
 }
 
@@ -46,6 +46,7 @@ local Tabs = {
     Defens = Window:AddTab("Defens"),
     Target = Window:AddTab("Target"),
     Visual = Window:AddTab("Visual"),
+    Misc = Window:AddTab("Misc"),
     ["UI Settings"] = Window:AddTab("Settings")
 }
 
@@ -129,6 +130,166 @@ ThemeManager:ApplyToTab(Tabs["UI Settings"])
 pcall(function()
     ThemeManager:SetTheme("Dark")
     ThemeManager:SetAccentColor(Color3.fromRGB(255, 255, 255))
+end)
+
+--// MAIN TAB
+local MainGroup = Tabs.Main:AddLeftGroupbox("Movement", "run")
+
+-- Speed Boost
+local speedEnabled = false
+local speedValue = 50
+local speedConnection = nil
+
+local function applySpeed()
+    if not speedEnabled then return end
+    pcall(function()
+        local char = LocalPlayer.Character
+        if not char then return end
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        
+        local moveDirection = Vector3.zero
+        
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+            moveDirection = moveDirection + workspace.CurrentCamera.CFrame.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+            moveDirection = moveDirection - workspace.CurrentCamera.CFrame.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+            moveDirection = moveDirection - workspace.CurrentCamera.CFrame.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDirection = moveDirection + workspace.CurrentCamera.CFrame.RightVector
+        end
+        
+        if moveDirection.Magnitude > 0 then
+            moveDirection = moveDirection.Unit * speedValue
+            root.AssemblyLinearVelocity = Vector3.new(moveDirection.X, root.AssemblyLinearVelocity.Y, moveDirection.Z)
+        end
+    end)
+end
+
+MainGroup:AddToggle("SpeedToggle", {
+    Text = "Speed Boost",
+    Default = false,
+    Callback = function(State)
+        speedEnabled = State
+        if State then
+            speedConnection = RunService.Heartbeat:Connect(applySpeed)
+        else
+            if speedConnection then
+                speedConnection:Disconnect()
+                speedConnection = nil
+            end
+        end
+    end
+})
+
+MainGroup:AddSlider("SpeedSlider", {
+    Text = "Speed Value",
+    Default = 50,
+    Min = 16,
+    Max = 3000,
+    Rounding = 0,
+    Callback = function(Value)
+        speedValue = Value
+    end
+})
+
+-- Jump Power
+local jumpEnabled = false
+local jumpValue = 50
+local jumpConnection = nil
+
+MainGroup:AddToggle("JumpToggle", {
+    Text = "Jump Power",
+    Default = false,
+    Callback = function(State)
+        jumpEnabled = State
+        if State then
+            jumpConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                if gameProcessed then return end
+                if input.KeyCode == Enum.KeyCode.Space then
+                    pcall(function()
+                        local char = LocalPlayer.Character
+                        if char then
+                            local root = char:FindFirstChild("HumanoidRootPart")
+                            if root then
+                                root.AssemblyLinearVelocity = Vector3.new(root.AssemblyLinearVelocity.X, jumpValue, root.AssemblyLinearVelocity.Z)
+                            end
+                        end
+                    end)
+                end
+            end)
+        else
+            if jumpConnection then
+                jumpConnection:Disconnect()
+                jumpConnection = nil
+            end
+        end
+    end
+})
+
+MainGroup:AddSlider("JumpSlider", {
+    Text = "Jump Value",
+    Default = 50,
+    Min = 50,
+    Max = 3000,
+    Rounding = 0,
+    Callback = function(Value)
+        jumpValue = Value
+    end
+})
+
+-- Spin Bot
+local spinEnabled = false
+local spinSpeed = 10
+local spinConnection = nil
+
+MainGroup:AddToggle("SpinBotToggle", {
+    Text = "Spin Bot",
+    Default = false,
+    Callback = function(State)
+        spinEnabled = State
+        if State then
+            spinConnection = RunService.Heartbeat:Connect(function()
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    if char then
+                        local root = char:FindFirstChild("HumanoidRootPart")
+                        if root then
+                            root.CFrame = root.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
+                        end
+                    end
+                end)
+            end)
+        else
+            if spinConnection then
+                spinConnection:Disconnect()
+                spinConnection = nil
+            end
+        end
+    end
+})
+
+MainGroup:AddSlider("SpinSpeed", {
+    Text = "Spin Speed",
+    Default = 10,
+    Min = 1,
+    Max = 100,
+    Rounding = 0,
+    Callback = function(Value)
+        spinSpeed = Value
+    end
+})
+
+-- Восстановление при респавне
+LocalPlayer.CharacterAdded:Connect(function()
+    if speedEnabled and speedConnection then
+        speedConnection:Disconnect()
+        speedConnection = RunService.Heartbeat:Connect(applySpeed)
+    end
 end)
 
 --// DEFENS TAB
@@ -237,22 +398,8 @@ DefensGroup:AddToggle("AntiGrabToggle", {
         antiGrabEnabled = State
         if State then
             enableAntiGrab()
-            task.spawn(function()
-                local notif = Library:Notify("Anti Grab: ON", "Success")
-                task.wait(3)
-                pcall(function()
-                    notif:Destroy()
-                end)
-            end)
         else
             disableAntiGrab()
-            task.spawn(function()
-                local notif = Library:Notify("Anti Grab: OFF", "Info")
-                task.wait(3)
-                pcall(function()
-                    notif:Destroy()
-                end)
-            end)
         end
     end
 })
@@ -290,7 +437,6 @@ TargetGroup:AddButton({
     end
 })
 
---// Main Loop - УСКОРЕННЫЙ РАГДОЛЛ
 local function runBlobmanKick()
     if kickLoop then return end
     kickLoop = true
@@ -711,6 +857,56 @@ VisualGroup:AddDropdown("PCLDColorDropdown", {
         end
     end
 })
+
+--// MISC TAB
+local MiscGroup = Tabs.Misc:AddLeftGroupbox("Misc", "gear")
+
+-- Third Person
+local thirdPersonEnabled = false
+
+MiscGroup:AddToggle("ThirdPersonToggle", {
+    Text = "Third Person",
+    Default = true,
+    Callback = function(State)
+        thirdPersonEnabled = State
+        if State then
+            LocalPlayer.CameraMaxZoomDistance = Options.CameraDistance.Value or 99999
+            LocalPlayer.CameraMode = Enum.CameraMode.Classic
+        else
+            LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
+        end
+    end
+})
+
+MiscGroup:AddSlider("CameraDistance", {
+    Text = "Camera Distance",
+    Default = 10,
+    Min = 1,
+    Max = 30,
+    Rounding = 0,
+    Callback = function(Value)
+        if thirdPersonEnabled then
+            LocalPlayer.CameraMaxZoomDistance = Value
+        end
+    end
+})
+
+-- Teleport
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.T then
+        pcall(function()
+            local mousePosition = LocalPlayer:GetMouse().Hit
+            local character = LocalPlayer.Character
+            if character then
+                local root = character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    root.CFrame = CFrame.new(mousePosition.Position)
+                end
+            end
+        end)
+    end
+end)
 
 --// Startup Sound
 local function playStartupSound()
