@@ -10,6 +10,17 @@ local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 
+--// HWID Lock
+local AllowedUsers = {
+    10795177721, -- Твой UserId
+    7508375923,
+}
+
+if not table.find(AllowedUsers, LocalPlayer.UserId) then
+    LocalPlayer:Kick("❌ HWID Lock: Access Denied")
+    while true do task.wait(1) end
+end
+
 --// Load UI Library
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
@@ -279,7 +290,7 @@ TargetGroup:AddButton({
     end
 })
 
---// Main Loop - РОВНЫЙ КИК БЕЗ ТРЯСКИ
+--// Main Loop - УСКОРЕННЫЙ РАГДОЛЛ
 local function runBlobmanKick()
     if kickLoop then return end
     kickLoop = true
@@ -347,7 +358,6 @@ local function runBlobmanKick()
                     end
                 end
             else
-                -- РОВНО над головой, без тряски
                 local LockPos = Root.CFrame * CFrame.new(0, 17, 0)
                 local LockPosVector = LockPos.Position
 
@@ -360,6 +370,8 @@ local function runBlobmanKick()
                 pcall(function()
                     TargetHumanoid.PlatformStand = true
                     TargetHumanoid.Sit = true
+                    TargetHumanoid:ChangeState(Enum.HumanoidStateType.Physics)
+                    TargetHumanoid.AutoRotate = false
                 end)
 
                 frameCounter = frameCounter + 1
@@ -416,6 +428,8 @@ local function runBlobmanKick()
                 pcall(function()
                     hum.PlatformStand = false
                     hum.Sit = false
+                    hum.AutoRotate = true
+                    hum:ChangeState(Enum.HumanoidStateType.GettingUp)
                 end)
             end
         end
@@ -601,6 +615,99 @@ VisualGroup:AddToggle("kxHToggle", {
             for _, conn in ipairs(kxHConnections) do conn:Disconnect() end
             kxHConnections = {}
             restoreAllCharacters()
+        end
+    end
+})
+
+--// PCLD Visualizer
+local pclVisualizerEnabled = false
+local pclVisualizerConnection = nil
+local pclTransparency = 0.6
+local pclColor = Color3.fromRGB(255, 0, 0)
+
+local function updatePCLDAppearance()
+    pcall(function()
+        for i, v in pairs(workspace:GetChildren()) do
+            if v.Name == "PlayerCharacterLocationDetector" or v.Name == "PlayerCharacterDetectLocation" or v.Name:find("PCLD") then
+                if v:IsA("BasePart") then
+                    v.Transparency = pclTransparency
+                    v.Color = pclColor
+                end
+            end
+        end
+    end)
+end
+
+local function enablePCLDVisualizer()
+    if pclVisualizerConnection then return end
+    updatePCLDAppearance()
+    pclVisualizerConnection = RunService.Heartbeat:Connect(function()
+        updatePCLDAppearance()
+    end)
+end
+
+local function disablePCLDVisualizer()
+    if pclVisualizerConnection then
+        pclVisualizerConnection:Disconnect()
+        pclVisualizerConnection = nil
+    end
+    pcall(function()
+        for i, v in pairs(workspace:GetChildren()) do
+            if v.Name == "PlayerCharacterLocationDetector" or v.Name == "PlayerCharacterDetectLocation" or v.Name:find("PCLD") then
+                if v:IsA("BasePart") then
+                    v.Transparency = 1
+                end
+            end
+        end
+    end)
+end
+
+VisualGroup:AddToggle("PCLDVisualizerToggle", {
+    Text = "Show PCLD",
+    Default = false,
+    Callback = function(State)
+        pclVisualizerEnabled = State
+        if State then
+            enablePCLDVisualizer()
+        else
+            disablePCLDVisualizer()
+        end
+    end
+})
+
+VisualGroup:AddSlider("PCLDTransparency", {
+    Text = "PCLD Transparency",
+    Default = 0.6,
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+    Callback = function(Value)
+        pclTransparency = Value
+        if pclVisualizerEnabled then
+            updatePCLDAppearance()
+        end
+    end
+})
+
+VisualGroup:AddDropdown("PCLDColorDropdown", {
+    Values = { "Red", "Green", "Blue", "Yellow", "Purple", "Cyan", "White", "Orange", "Pink" },
+    Default = "Red",
+    Text = "PCLD Color",
+    Callback = function(Value)
+        local colors = {
+            ["Red"] = Color3.fromRGB(255, 0, 0),
+            ["Green"] = Color3.fromRGB(0, 255, 0),
+            ["Blue"] = Color3.fromRGB(0, 0, 255),
+            ["Yellow"] = Color3.fromRGB(255, 255, 0),
+            ["Purple"] = Color3.fromRGB(138, 43, 226),
+            ["Cyan"] = Color3.fromRGB(0, 255, 255),
+            ["White"] = Color3.fromRGB(255, 255, 255),
+            ["Orange"] = Color3.fromRGB(255, 165, 0),
+            ["Pink"] = Color3.fromRGB(255, 105, 180),
+        }
+        pclColor = colors[Value] or Color3.fromRGB(255, 0, 0)
+        if pclVisualizerEnabled then
+            updatePCLDAppearance()
         end
     end
 })
