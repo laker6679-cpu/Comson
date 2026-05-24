@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
+local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -21,7 +22,6 @@ local AllowedUsers = {
     10795177721,
     7508375923,
     11000050138,
-    4732270009,
 }
 
 if not table.find(AllowedUsers, LocalPlayer.UserId) then
@@ -194,6 +194,53 @@ end
 
 --// ============ DEFENS TAB - ANTI FUNCTIONS ============
 local AntiGroup = Tabs.Defens:AddLeftGroupbox("Anti Functions", "shield")
+
+-- Anti Blobman (ИЗ POLAR HUB)
+local antiBlobmanActive = false
+local antiBlobmanConnection = nil
+
+local function StartAntiBlobman()
+    antiBlobmanConnection = workspace.DescendantAdded:Connect(function(obj)
+        if not antiBlobmanActive then return end
+        if obj.Name == "CreatureBlobman" and obj:IsA("Model") then
+            task.wait(0.1)
+            local plr = LocalPlayer
+            local char = plr.Character
+            if char then
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local distance = (hrp.Position - obj.PrimaryPart.Position).Magnitude
+                    if distance < 30 then
+                        pcall(function()
+                            ReplicatedStorage.MenuToys.DestroyToy:FireServer(obj)
+                        end)
+                        Library:Notify({
+                            Title = "FrendlyHub",
+                            Description = "Anti Blobman: Removed nearby Blobman!",
+                            Duration = 2
+                        })
+                    end
+                end
+            end
+        end
+    end)
+end
+
+AntiGroup:AddToggle("AntiBlobmanToggle", {
+    Text = "Anti Blobman",
+    Default = false,
+    Callback = function(Value)
+        antiBlobmanActive = Value
+        if Value then
+            StartAntiBlobman()
+        else
+            if antiBlobmanConnection then
+                antiBlobmanConnection:Disconnect()
+                antiBlobmanConnection = nil
+            end
+        end
+    end
+})
 
 -- Anti Burn
 local antiBurnActive = false
@@ -829,7 +876,7 @@ AntiGroup:AddToggle("WaterWalkToggle", {
     end
 })
 
---// ============ DEFENS TAB - ANTI INPUT LAG (ПОДНЯТ ВЫШЕ) ============
+--// ============ DEFENS TAB - ANTI INPUT LAG ============
 local AntiInputGroup = Tabs.Defens:AddRightGroupbox("Anti Input Lag", "palette")
 
 -- Toy List
@@ -1259,7 +1306,7 @@ TargetSelectGroup:AddLabel("Aim Select Key"):AddKeyPicker("AimSelectKey", {
     end
 })
 
---// ============ BLOBMAN FEATURES (ПЕРЕМЕЩЕН В TARGET TAB) ============
+--// ============ BLOBMAN FEATURES ============
 
 -- Auto Sit Blobman
 local autoSitBlobman = false
@@ -2089,7 +2136,7 @@ local function RemoveAntiKickFunction(targetName)
     end
 end
 
--- LOOP KILL (ИЗ POLAR HUB)
+-- LOOP KILL
 local loopKillActive = false
 local loopKillTask = nil
 
@@ -2828,6 +2875,22 @@ MiscGroup:AddToggle("TeleportToggle", {
     Callback = function(Value)
         tpEnabled = Value
     end
+})
+
+-- PSHADE ULTIMATE (КОПКА)
+MiscGroup:AddButton({
+    Text = "PShade Ultimate",
+    Func = function()
+        pcall(function()
+            loadstring(game:HttpGet('https://raw.githubusercontent.com/randomstring0/pshade-ultimate/refs/heads/main/src/cd.lua'))()
+            Library:Notify({
+                Title = "FrendlyHub",
+                Description = "PShade Ultimate loaded!",
+                Duration = 3
+            })
+        end)
+    end,
+    DoubleClick = false
 })
 
 --// Startup Sound
