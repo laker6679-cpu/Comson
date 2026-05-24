@@ -414,7 +414,8 @@ local function getPlayerList()
     local List = {}
     for _, Player in ipairs(Players:GetPlayers()) do
         if Player ~= LocalPlayer then
-            table.insert(List, Player.Name)
+            local displayText = Player.DisplayName .. " (@" .. Player.Name .. ")"
+            table.insert(List, displayText)
         end
     end
     return List
@@ -426,7 +427,10 @@ TargetGroup:AddDropdown("KickPlayerDropdown", {
     Multi = false,
     Text = "Select Player",
     Callback = function(Value)
-        selectedPlayer = Players:FindFirstChild(Value)
+        local username = Value:match("%(@(.+)%)")
+        if username then
+            selectedPlayer = Players:FindFirstChild(username)
+        end
     end
 })
 
@@ -437,6 +441,7 @@ TargetGroup:AddButton({
     end
 })
 
+--// Main Loop - PCLD ЖЁСТКИЙ ЗАХВАТ
 local function runBlobmanKick()
     if kickLoop then return end
     kickLoop = true
@@ -454,6 +459,7 @@ local function runBlobmanKick()
         local grabStartTime = 0
         local savedPosition = nil
         local frameCounter = 0
+        local capturedPCLD = nil
 
         while kickLoop do
             local Target = selectedPlayer
@@ -461,16 +467,31 @@ local function runBlobmanKick()
 
             local TargetCharacter = Target.Character
             if not TargetCharacter then
-                dragging = false; grabStartTime = 0; task.wait(); continue
+                dragging = false; grabStartTime = 0; capturedPCLD = nil; task.wait(); continue
             end
 
             local TargetRoot = TargetCharacter:FindFirstChild("HumanoidRootPart")
             local TargetHumanoid = TargetCharacter:FindFirstChild("Humanoid")
             if not TargetRoot or not TargetHumanoid then
-                dragging = false; grabStartTime = 0; task.wait(); continue
+                dragging = false; grabStartTime = 0; capturedPCLD = nil; task.wait(); continue
             end
             if TargetHumanoid.Health <= 0 then
-                dragging = false; grabStartTime = 0; task.wait(); continue
+                dragging = false; grabStartTime = 0; capturedPCLD = nil; task.wait(); continue
+            end
+
+            -- Проверяем не ушёл ли TargetRoot слишком далеко
+            if dragging then
+                local distance = (TargetRoot.Position - Root.Position).Magnitude
+                if distance > 1000 then
+                    dragging = false
+                    grabStartTime = 0
+                    savedPosition = nil
+                    if capturedPCLD then
+                        pcall(function() capturedPCLD.Anchored = false end)
+                        capturedPCLD = nil
+                    end
+                    continue
+                end
             end
 
             if not dragging then
@@ -497,6 +518,18 @@ local function runBlobmanKick()
                     dragging = true
                     grabStartTime = 0
                     frameCounter = 0
+                    
+                    -- Находим и якорим PCLD
+                    local PCLD = TargetCharacter:FindFirstChild("PCLD")
+                        or TargetCharacter:FindFirstChild("PlayerCharacterDetectLocation")
+                        or workspace:FindFirstChild("PCLD_" .. Target.Name)
+                        or workspace:FindFirstChild(Target.Name .. "_PCLD")
+                    
+                    if PCLD and PCLD:IsA("BasePart") then
+                        PCLD.Anchored = true
+                        capturedPCLD = PCLD
+                    end
+                    
                     if savedPosition then
                         Root.CFrame = savedPosition
                         Root.AssemblyLinearVelocity = Vector3.zero
@@ -522,29 +555,16 @@ local function runBlobmanKick()
 
                 frameCounter = frameCounter + 1
 
-                local PCLD = TargetCharacter:FindFirstChild("PCLD")
-                    or TargetCharacter:FindFirstChild("PlayerCharacterDetectLocation")
-                if PCLD and PCLD:IsA("BasePart") then
+                -- PCLD жёстко фиксируем каждый кадр
+                if capturedPCLD and capturedPCLD.Parent then
                     pcall(function()
-                        PCLD.CFrame = LockPos
-                        PCLD.Velocity = Vector3.zero
-                        PCLD.RotVelocity = Vector3.zero
-                        PCLD.AssemblyLinearVelocity = Vector3.zero
-                        PCLD.AssemblyAngularVelocity = Vector3.zero
-                        SetNetworkOwner:FireServer(PCLD, LockPosVector)
-                    end)
-                end
-
-                local PCLDInWorkspace = workspace:FindFirstChild("PCLD_" .. Target.Name)
-                    or workspace:FindFirstChild(Target.Name .. "_PCLD")
-                if PCLDInWorkspace and PCLDInWorkspace:IsA("BasePart") then
-                    pcall(function()
-                        PCLDInWorkspace.CFrame = LockPos
-                        PCLDInWorkspace.Velocity = Vector3.zero
-                        PCLDInWorkspace.RotVelocity = Vector3.zero
-                        PCLDInWorkspace.AssemblyLinearVelocity = Vector3.zero
-                        PCLDInWorkspace.AssemblyAngularVelocity = Vector3.zero
-                        SetNetworkOwner:FireServer(PCLDInWorkspace, LockPosVector)
+                        capturedPCLD.Anchored = true
+                        capturedPCLD.CFrame = LockPos
+                        capturedPCLD.Velocity = Vector3.zero
+                        capturedPCLD.RotVelocity = Vector3.zero
+                        capturedPCLD.AssemblyLinearVelocity = Vector3.zero
+                        capturedPCLD.AssemblyAngularVelocity = Vector3.zero
+                        SetNetworkOwner:FireServer(capturedPCLD, LockPosVector)
                     end)
                 end
 
@@ -568,6 +588,11 @@ local function runBlobmanKick()
             RunService.Heartbeat:Wait()
         end
 
+        -- Отвязываем PCLD
+        if capturedPCLD and capturedPCLD.Parent then
+            pcall(function() capturedPCLD.Anchored = false end)
+        end
+
         if selectedPlayer and selectedPlayer.Character then
             if selectedPlayer.Character:FindFirstChild("Humanoid") then
                 local hum = selectedPlayer.Character.Humanoid
@@ -578,6 +603,11 @@ local function runBlobmanKick()
                     hum:ChangeState(Enum.HumanoidStateType.GettingUp)
                 end)
             end
+            local PCLD = selectedPlayer.Character:FindFirstChild("PCLD")
+                or selectedPlayer.Character:FindFirstChild("PlayerCharacterDetectLocation")
+            if PCLD and PCLD:IsA("BasePart") then
+                pcall(function() PCLD.Anchored = false end)
+            end
         end
 
         pcall(function()
@@ -587,6 +617,7 @@ local function runBlobmanKick()
         end)
 
         savedPosition = nil
+        capturedPCLD = nil
         Toggles.BlobmanKickToggle:SetValue(false)
     end)
 end
