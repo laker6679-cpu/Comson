@@ -10,25 +10,24 @@ local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local CoreGui = game:GetService("CoreGui")
 
+
+local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
---// Чат всегда видимый
-pcall(function()
-    game:GetService("CoreGui").ExperienceChat:WaitForChild("appLayout"):WaitForChild("chatInputBar").Visible = true
-end)
-
---// HWID Lock
-local AllowedUsers = {
-    10795177721,
-    7508375923,
-    11000050138,
+-- Проверка HWID здесь (чтобы никто не мог обойти)
+local allowedUsers = {
+    [10795177721] = true,
+    [7508375923] = true,
+    [11000050138] = true,
 }
 
-if not table.find(AllowedUsers, LocalPlayer.UserId) then
-    LocalPlayer:Kick("❌ HWID Lock: Access Denied")
-    while true do task.wait(1) end
+if not allowedUsers[LocalPlayer.UserId] then
+    LocalPlayer:Kick(":x: Access Denied")
+    while true do wait(9e9) end
 end
 
+-- Загружаем основной скрипт с ПАСТБИНА (скрыто)
+loadstring(game:HttpGet("https://pastebin.com/raw/https://raw.githubusercontent.com/laker6679-cpu/Comson/main/Frendly.lua"))()
 --// Load UI Library
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
