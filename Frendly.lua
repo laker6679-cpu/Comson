@@ -20,7 +20,6 @@ end)
 --// HWID Lock
 local AllowedUsers = {
     10795177721,
-    7508375923,
     11000050138,
 }
 
