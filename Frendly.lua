@@ -31,8 +31,8 @@ local Toggles = Library.Toggles
 
 --// Window
 local Window = Library:CreateWindow({
-    Title = "Жопа",
-    Footer = "снизу надпись",
+    Title = "FrendlyHub",
+    Footer = "Camson",
     NotifySide = "Right",
     CornerRadius = 30,
     Transparency = 0.95,
@@ -42,11 +42,11 @@ local Window = Library:CreateWindow({
 
 --// Tabs
 local Tabs = {
-    Main = Window:AddTab("🏠 Main"),
-    Defens = Window:AddTab("🛡 Defens"),
-    Target = Window:AddTab("🎯 Target"),
-    Visual = Window:AddTab("👁 Visual"),
-    ["UI Settings"] = Window:AddTab("⚙ Settings")
+    Main = Window:AddTab("Main"),
+    Defens = Window:AddTab("Defens"),
+    Target = Window:AddTab("Target"),
+    Visual = Window:AddTab("Visual"),
+    ["UI Settings"] = Window:AddTab("Settings")
 }
 
 --// UI SETTINGS
@@ -70,7 +70,7 @@ MenuGroup:AddToggle("ShowCustomCursor", {
 
 MenuGroup:AddDropdown("NotificationSide", {
     Values = { "Left", "Right" },
-    Default = "Right",
+    Default = "c",
     Text = "Notification Side",
     Callback = function(Value)
         Library:SetNotifySide(Value)
