@@ -279,7 +279,7 @@ TargetGroup:AddButton({
     end
 })
 
---// Main Loop - РОВНЫЙ КИК БЕЗ ТРЯСКИ
+--// Main Loop - УСКОРЕННЫЙ РАГДОЛЛ
 local function runBlobmanKick()
     if kickLoop then return end
     kickLoop = true
@@ -347,7 +347,6 @@ local function runBlobmanKick()
                     end
                 end
             else
-                -- РОВНО над головой, без тряски
                 local LockPos = Root.CFrame * CFrame.new(0, 17, 0)
                 local LockPosVector = LockPos.Position
 
@@ -357,9 +356,12 @@ local function runBlobmanKick()
                 TargetRoot.AssemblyLinearVelocity = Vector3.zero
                 TargetRoot.AssemblyAngularVelocity = Vector3.zero
 
+                -- УСКОРЕННЫЙ РАГДОЛЛ: Physics каждый кадр + AutoRotate false
                 pcall(function()
                     TargetHumanoid.PlatformStand = true
                     TargetHumanoid.Sit = true
+                    TargetHumanoid:ChangeState(Enum.HumanoidStateType.Physics)
+                    TargetHumanoid.AutoRotate = false
                 end)
 
                 frameCounter = frameCounter + 1
@@ -416,6 +418,8 @@ local function runBlobmanKick()
                 pcall(function()
                     hum.PlatformStand = false
                     hum.Sit = false
+                    hum.AutoRotate = true
+                    hum:ChangeState(Enum.HumanoidStateType.GettingUp)
                 end)
             end
         end
