@@ -279,6 +279,7 @@ TargetGroup:AddButton({
     end
 })
 
+--// Main Loop - РОВНЫЙ КИК БЕЗ ТРЯСКИ
 local function runBlobmanKick()
     if kickLoop then return end
     kickLoop = true
@@ -296,7 +297,6 @@ local function runBlobmanKick()
         local grabStartTime = 0
         local savedPosition = nil
         local frameCounter = 0
-        local shakeOffset = 5
 
         while kickLoop do
             local Target = selectedPlayer
@@ -347,10 +347,8 @@ local function runBlobmanKick()
                     end
                 end
             else
-                local shakeX = math.random(-shakeOffset * 10, shakeOffset * 10) / 10
-                local shakeZ = math.random(-shakeOffset * 10, shakeOffset * 10) / 10
-                
-                local LockPos = Root.CFrame * CFrame.new(shakeX, 17, shakeZ)
+                -- РОВНО над головой, без тряски
+                local LockPos = Root.CFrame * CFrame.new(0, 17, 0)
                 local LockPosVector = LockPos.Position
 
                 TargetRoot.CFrame = LockPos
